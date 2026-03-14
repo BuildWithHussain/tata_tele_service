@@ -47,5 +47,17 @@ frappe.ui.form.on("Tata Tele Settings", {
 			});
 			dialog.show();
 		}).addClass("btn-primary");
+
+		frm.add_custom_button(__("Sync Call Records"), () => {
+			frappe.call({
+				method: "tata_tele_service.tasks.enqueue_sync_call_records",
+				callback() {
+					frappe.show_alert({
+						message: __("Call syncing started"),
+						indicator: "blue",
+					});
+				},
+			});
+		});
 	},
 });

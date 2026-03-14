@@ -29,21 +29,30 @@ class TataTeleCallRecord(Document):
 def _create_crm_call_log(doc: Document) -> None:
 	is_incoming = doc.direction == "inbound"
 
-	call_log = frappe.get_doc(
-		{
-			"doctype": "CRM Call Log",
-			"id": doc.call_id,
-			"type": "Incoming" if is_incoming else "Outgoing",
-			"status": STATUS_MAP.get(doc.status, "Completed"),
-			"from": doc.customer_number if is_incoming else doc.agent_number,
-			"to": doc.agent_number if is_incoming else doc.customer_number,
-			"start_time": doc.start_time,
-			"end_time": doc.end_time,
-			"duration": doc.call_duration,
-			"recording_url": doc.recording_url or "",
-			"telephony_medium": "Manual",
-		}
-	)
+	# find user by agent_number
+	agent_user = _get_user_by_mobile(doc.agent_number)
+
+	call_log_data = {
+		"doctype": "CRM Call Log",
+		"id": doc.call_id,
+		"type": "Incoming" if is_incoming else "Outgoing",
+		"status": STATUS_MAP.get(doc.status, "Completed"),
+		"from": doc.customer_number if is_incoming else doc.agent_number,
+		"to": doc.agent_number if is_incoming else doc.customer_number,
+		"start_time": doc.start_time,
+		"end_time": doc.end_time,
+		"duration": doc.call_duration,
+		"recording_url": doc.recording_url or "",
+		"telephony_medium": "Manual",
+	}
+
+	if agent_user:
+		if is_incoming:
+			call_log_data["receiver"] = agent_user
+		else:
+			call_log_data["caller"] = agent_user
+
+	call_log = frappe.get_doc(call_log_data)
 	call_log.insert(ignore_permissions=True)
 
 	# auto-link with Lead/Deal using the same pattern as Twilio/Exotel
@@ -68,6 +77,21 @@ def _create_crm_call_log(doc: Document) -> None:
 		pass
 
 	doc.db_set("crm_call_log", call_log.name)
+
+
+def _get_user_by_mobile(mobile: str | None) -> str | None:
+	if not mobile:
+		return None
+	cleaned = mobile.strip().replace(" ", "").replace("-", "").replace("+", "")
+	# try with and without country code
+	variants = [cleaned, mobile]
+	if cleaned.startswith("91") and len(cleaned) > 10:
+		variants.append(cleaned[2:])
+	for num in variants:
+		user = frappe.db.get_value("User", {"mobile_no": ["like", f"%{num}"]}, "name")
+		if user:
+			return user
+	return None
 
 
 def _download_recording(doc: Document) -> None:

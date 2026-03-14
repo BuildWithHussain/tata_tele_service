@@ -6,6 +6,11 @@ from frappe.integrations.utils import make_get_request
 LOOKBACK_HOURS = 2
 
 
+@frappe.whitelist()
+def enqueue_sync_call_records() -> None:
+	frappe.enqueue(sync_call_records, queue="default")
+
+
 def sync_call_records() -> None:
 	"""Fetch call records from the past 2 hours and insert any new ones."""
 	try:

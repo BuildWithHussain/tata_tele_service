@@ -40,7 +40,11 @@ def click_to_call(
 	settings = get_settings()
 	headers = get_headers()
 
-	agent = agent_number or settings.default_agent_number
+	user_mobile = frappe.db.get_value("User", frappe.session.user, "mobile_no")
+	if not user_mobile:
+		frappe.throw(_("Mobile number not set in your User profile."))
+
+	agent = agent_number or user_mobile
 	caller = caller_id or settings.default_caller_id
 
 	if not agent:
