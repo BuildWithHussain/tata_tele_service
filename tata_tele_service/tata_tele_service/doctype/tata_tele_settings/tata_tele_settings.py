@@ -1,7 +1,8 @@
 import frappe
 from frappe import _
-from frappe.integrations.utils import make_get_request, make_post_request
 from frappe.model.document import Document
+
+from tata_tele_service.api import tata_tele_request
 
 
 class TataTeleSettings(Document):
@@ -15,22 +16,6 @@ def get_settings() -> Document:
 	return settings
 
 
-def get_headers() -> dict:
-	settings = frappe.get_cached_doc("Tata Tele Settings")
-	token = settings.get_password("access_token")
-	if not token:
-		frappe.throw(_("Tata Tele Access Token is not configured."))
-
-	if not token.startswith("Bearer "):
-		token = f"Bearer {token}"
-
-	return {
-		"Authorization": token,
-		"Accept": "application/json",
-		"Content-Type": "application/json",
-	}
-
-
 @frappe.whitelist()
 def click_to_call(
 	destination_number: str,
@@ -38,7 +23,6 @@ def click_to_call(
 	caller_id: str | None = None,
 ) -> dict:
 	settings = get_settings()
-	headers = get_headers()
 
 	user_mobile = frappe.db.get_value("User", frappe.session.user, "mobile_no")
 	if not user_mobile:
@@ -60,5 +44,5 @@ def click_to_call(
 		"caller_id": caller,
 	}
 
-	response = make_post_request(url, data=frappe.as_json(payload), headers=headers)
+	response = tata_tele_request("POST", url, payload)
 	return {"status": "success", "data": response}

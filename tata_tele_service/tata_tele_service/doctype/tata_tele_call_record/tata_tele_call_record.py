@@ -2,7 +2,10 @@ import requests
 
 import frappe
 from frappe import _
+from frappe.integrations.utils import create_request_log
 from frappe.model.document import Document
+
+from tata_tele_service.api import SERVICE_NAME
 
 STATUS_MAP = {
 	"answered": "Completed",
@@ -98,37 +101,48 @@ def _download_recording(doc: Document) -> None:
 	if not doc.recording_url:
 		return
 
-	settings = frappe.get_cached_doc("Tata Tele Settings")
-	token = settings.get_password("access_token")
-	if not token:
-		return
+	from tata_tele_service.api import _get_headers
 
-	if not token.startswith("Bearer "):
-		token = f"Bearer {token}"
+	headers = _get_headers()
 
-	response = requests.get(
-		doc.recording_url,
-		headers={"Authorization": token},
-		timeout=30,
+	integration_request = create_request_log(
+		data={"call_id": doc.call_id},
+		service_name=SERVICE_NAME,
+		url=doc.recording_url,
+		request_headers=headers,
+		reference_doctype=doc.doctype,
+		reference_docname=doc.name,
 	)
-	response.raise_for_status()
 
-	content_type = response.headers.get("Content-Type", "")
-	ext = "mp3" if "mpeg" in content_type else "wav"
-	filename = f"{doc.call_id}.{ext}"
+	try:
+		response = requests.get(
+			doc.recording_url,
+			headers=headers,
+			timeout=30,
+		)
+		response.raise_for_status()
 
-	file_doc = frappe.get_doc(
-		{
-			"doctype": "File",
-			"file_name": filename,
-			"content": response.content,
-			"attached_to_doctype": doc.doctype,
-			"attached_to_name": doc.name,
-			"is_private": 1,
-		}
-	)
-	file_doc.save(ignore_permissions=True)
-	doc.db_set("call_recording", file_doc.file_url)
+		content_type = response.headers.get("Content-Type", "")
+		ext = "mp3" if "mpeg" in content_type else "wav"
+		filename = f"{doc.call_id}.{ext}"
+
+		file_doc = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": filename,
+				"content": response.content,
+				"attached_to_doctype": doc.doctype,
+				"attached_to_name": doc.name,
+				"is_private": 1,
+			}
+		)
+		file_doc.save(ignore_permissions=True)
+		doc.db_set("call_recording", file_doc.file_url)
+
+		integration_request.handle_success({"file": file_doc.file_url})
+	except Exception:
+		integration_request.handle_failure(frappe.get_traceback())
+		raise
 
 
 @frappe.whitelist()

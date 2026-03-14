@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 
 import frappe
-from frappe.integrations.utils import make_get_request
+
+from tata_tele_service.api import tata_tele_request
 
 LOOKBACK_HOURS = 2
 
@@ -18,15 +19,6 @@ def sync_call_records() -> None:
 		if not settings.api_base_url or not settings.get_password("access_token"):
 			return
 
-		token = settings.get_password("access_token")
-		if not token.startswith("Bearer "):
-			token = f"Bearer {token}"
-
-		headers = {
-			"Authorization": token,
-			"Accept": "application/json",
-		}
-
 		now = datetime.now()
 		from_date = (now - timedelta(hours=LOOKBACK_HOURS)).strftime("%Y-%m-%d %H:%M:%S")
 		to_date = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -38,7 +30,7 @@ def sync_call_records() -> None:
 				f"?from_date={from_date}&to_date={to_date}&limit=100&page={page}"
 			)
 
-			data = make_get_request(url, headers=headers)
+			data = tata_tele_request("GET", url)
 
 			results = data.get("results") if isinstance(data, dict) else []
 			if not results:
