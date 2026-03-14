@@ -1,0 +1,13 @@
+[
+ {
+  "docstatus": 0,
+  "doctype": "CRM Form Script",
+  "dt": "CRM Lead",
+  "enabled": 1,
+  "is_standard": 0,
+  "modified": "2026-03-14 17:17:14.150505",
+  "name": "Click to call button in Lead",
+  "script": "class CRMLead {\n  onLoad() {\n    let doc = this.doc;\n    this.actions = [\n      {\n        label: \"Make a call\",\n        onClick: () => {\n          let defaultNumber = doc.mobile_no || doc.phone || \"\";\n          createDialog({\n            title: \"Make a call\",\n            html: '<div style=\"margin-top:8px\"><label class=\"text-sm text-ink-gray-5\" style=\"display:block;margin-bottom:4px\">Destination Number</label><input id=\"smartflo-dest\" type=\"text\" value=\"' + defaultNumber + '\" class=\"form-input\" style=\"width:100%;padding:8px;border:1px solid var(--gray-300);border-radius:8px;font-size:14px\" /></div>',\n            actions: [\n              {\n                label: \"Call\",\n                variant: \"solid\",\n                onClick: (close) => {\n                  let num = document.getElementById(\"smartflo-dest\").value;\n                  if (!num) {\n                    toast.error(\"Please enter a destination number\");\n                    return;\n                  }\n                  call(\n                    \"tata_tele_service.tata_tele_service.doctype.tata_tele_settings.tata_tele_settings.click_to_call\",\n                    { destination_number: num },\n                  ).then(() => {\n                    toast.success(\"Call initiated\");\n                    close();\n                  });\n                },\n              },\n            ],\n          });\n        },\n      },\n    ];\n  }\n}",
+  "view": "Form"
+ }
+]

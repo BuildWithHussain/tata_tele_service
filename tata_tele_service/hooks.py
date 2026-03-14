@@ -5,6 +5,13 @@ app_description = "Integration for Tata Tele Service"
 app_email = "developers@buildwithhussain.com"
 app_license = "mit"
 
+fixtures = [
+	{
+		"dt": "CRM Form Script",
+		"filters": [["name", "in", ["Click to call button in Lead"]]],
+	},
+]
+
 # Apps
 # ------------------
 

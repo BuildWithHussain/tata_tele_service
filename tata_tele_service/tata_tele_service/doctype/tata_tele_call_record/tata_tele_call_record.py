@@ -4,10 +4,70 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 
+STATUS_MAP = {
+	"answered": "Completed",
+	"answered by customer": "Completed",
+	"missed": "No Answer",
+	"missed by customer": "No Answer",
+	"missed by agent (click to call)": "No Answer",
+	"busy": "Busy",
+	"declined": "Canceled",
+	"voicemail": "Completed",
+}
+
 
 class TataTeleCallRecord(Document):
 	def on_submit(self) -> None:
-		_download_recording(self)
+		try:
+			_download_recording(self)
+		except Exception:
+			frappe.log_error(f"Tata Tele Recording Download Error: {self.call_id}")
+
+		_create_crm_call_log(self)
+
+
+def _create_crm_call_log(doc: Document) -> None:
+	is_incoming = doc.direction == "inbound"
+
+	call_log = frappe.get_doc(
+		{
+			"doctype": "CRM Call Log",
+			"id": doc.call_id,
+			"type": "Incoming" if is_incoming else "Outgoing",
+			"status": STATUS_MAP.get(doc.status, "Completed"),
+			"from": doc.customer_number if is_incoming else doc.agent_number,
+			"to": doc.agent_number if is_incoming else doc.customer_number,
+			"start_time": doc.start_time,
+			"end_time": doc.end_time,
+			"duration": doc.call_duration,
+			"recording_url": doc.recording_url or "",
+			"telephony_medium": "Manual",
+		}
+	)
+	call_log.insert(ignore_permissions=True)
+
+	# auto-link with Lead/Deal using the same pattern as Twilio/Exotel
+	try:
+		from crm.integrations.api import get_contact_by_phone_number
+
+		contact_number = doc.customer_number
+		if contact_number:
+			contact = get_contact_by_phone_number(contact_number)
+			if contact.get("name"):
+				doctype = "Contact"
+				docname = contact["name"]
+				if contact.get("lead"):
+					doctype = "CRM Lead"
+					docname = contact["lead"]
+				elif contact.get("deal"):
+					doctype = "CRM Deal"
+					docname = contact["deal"]
+				call_log.link_with_reference_doc(doctype, docname)
+				call_log.save(ignore_permissions=True)
+	except Exception:
+		pass
+
+	doc.db_set("crm_call_log", call_log.name)
 
 
 def _download_recording(doc: Document) -> None:

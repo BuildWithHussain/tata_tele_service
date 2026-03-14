@@ -22,6 +22,8 @@
   "recording_section",
   "recording_url",
   "call_recording",
+  "crm_section",
+  "crm_call_log",
   "raw_response_section",
   "raw_response"
  ],
@@ -123,6 +125,18 @@
    "fieldname": "call_recording",
    "fieldtype": "Attach",
    "label": "Call Recording"
+  },
+  {
+   "fieldname": "crm_section",
+   "fieldtype": "Section Break",
+   "label": "CRM"
+  },
+  {
+   "fieldname": "crm_call_log",
+   "fieldtype": "Link",
+   "label": "CRM Call Log",
+   "options": "CRM Call Log",
+   "read_only": 1
   },
   {
    "fieldname": "raw_response_section",

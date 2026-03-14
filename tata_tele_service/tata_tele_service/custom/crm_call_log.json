@@ -1,0 +1,32 @@
+{
+ "custom_fields": [],
+ "custom_perms": [],
+ "doctype": "CRM Call Log",
+ "links": [],
+ "property_setters": [
+  {
+   "_assign": null,
+   "_comments": null,
+   "_liked_by": null,
+   "_user_tags": null,
+   "creation": "2026-03-14 17:26:43.729476",
+   "default_value": null,
+   "doc_type": "CRM Call Log",
+   "docstatus": 0,
+   "doctype_or_field": "DocField",
+   "field_name": "recording_url",
+   "idx": 0,
+   "is_system_generated": 1,
+   "modified": "2026-03-14 17:26:43.729476",
+   "modified_by": "Administrator",
+   "module": null,
+   "name": "CRM Call Log-recording_url-length",
+   "owner": "Administrator",
+   "property": "length",
+   "property_type": "Int",
+   "row_name": null,
+   "value": "500"
+  }
+ ],
+ "sync_on_migrate": 1
+}
