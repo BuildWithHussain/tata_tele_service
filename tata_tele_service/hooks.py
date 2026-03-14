@@ -143,23 +143,13 @@ app_license = "mit"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"tata_tele_service.tasks.all"
-# 	],
-# 	"daily": [
-# 		"tata_tele_service.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"tata_tele_service.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"tata_tele_service.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"tata_tele_service.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"cron": {
+		"*/5 * * * *": [
+			"tata_tele_service.tasks.sync_call_records",
+		],
+	},
+}
 
 # Testing
 # -------
