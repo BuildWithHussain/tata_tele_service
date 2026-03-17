@@ -26,7 +26,10 @@ class TataTeleCallRecord(Document):
 		except Exception:
 			frappe.log_error(f"Tata Tele Recording Download Error: {self.call_id}")
 
-		_create_crm_call_log(self)
+		try:
+			_create_crm_call_log(self)
+		except Exception:
+			frappe.log_error(f"Tata Tele CRM Call Log Error: {self.call_id}")
 
 
 def _create_crm_call_log(doc: Document) -> None:
@@ -34,6 +37,26 @@ def _create_crm_call_log(doc: Document) -> None:
 
 	# find user by agent_number
 	agent_user = _get_user_by_mobile(doc.agent_number)
+
+	# look up lead/deal/contact by customer number before creating the call log
+	reference_doctype = None
+	reference_docname = None
+	try:
+		from crm.integrations.api import get_contact_by_phone_number
+
+		if doc.customer_number:
+			contact = get_contact_by_phone_number(doc.customer_number)
+			if contact.get("name"):
+				reference_doctype = "Contact"
+				reference_docname = contact["name"]
+				if contact.get("lead"):
+					reference_doctype = "CRM Lead"
+					reference_docname = contact["lead"]
+				elif contact.get("deal"):
+					reference_doctype = "CRM Deal"
+					reference_docname = contact["deal"]
+	except Exception:
+		pass
 
 	call_log_data = {
 		"doctype": "CRM Call Log",
@@ -55,29 +78,16 @@ def _create_crm_call_log(doc: Document) -> None:
 		else:
 			call_log_data["caller"] = agent_user
 
+	if reference_doctype and reference_docname:
+		call_log_data["reference_doctype"] = reference_doctype
+		call_log_data["reference_docname"] = reference_docname
+
 	call_log = frappe.get_doc(call_log_data)
 	call_log.insert(ignore_permissions=True)
 
-	# auto-link with Lead/Deal using the same pattern as Twilio/Exotel
-	try:
-		from crm.integrations.api import get_contact_by_phone_number
-
-		contact_number = doc.customer_number
-		if contact_number:
-			contact = get_contact_by_phone_number(contact_number)
-			if contact.get("name"):
-				doctype = "Contact"
-				docname = contact["name"]
-				if contact.get("lead"):
-					doctype = "CRM Lead"
-					docname = contact["lead"]
-				elif contact.get("deal"):
-					doctype = "CRM Deal"
-					docname = contact["deal"]
-				call_log.link_with_reference_doc(doctype, docname)
-				call_log.save(ignore_permissions=True)
-	except Exception:
-		pass
+	if reference_doctype and reference_docname:
+		call_log.link_with_reference_doc(reference_doctype, reference_docname)
+		call_log.save(ignore_permissions=True)
 
 	doc.db_set("crm_call_log", call_log.name)
 
