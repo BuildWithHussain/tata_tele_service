@@ -6,7 +6,19 @@ from tata_tele_service.api import tata_tele_request
 
 
 class TataTeleSettings(Document):
-	pass
+	def validate(self):
+		self.validate_duplicate_companies()
+
+	def validate_duplicate_companies(self):
+		seen = set()
+		for row in self.company_caller_ids or []:
+			if row.company in seen:
+				frappe.throw(
+					_("Row {0}: Company {1} already has a Caller ID configured.").format(
+						row.idx, frappe.bold(row.company)
+					)
+				)
+			seen.add(row.company)
 
 
 def get_settings() -> Document:
@@ -14,6 +26,21 @@ def get_settings() -> Document:
 	if not settings.api_base_url:
 		frappe.throw(_("Tata Tele API Base URL is not configured."))
 	return settings
+
+
+def get_caller_id_for_user(settings: Document) -> str | None:
+	"""Resolve Caller ID: User → Employee → Company → child table DID."""
+	employee_company = frappe.db.get_value(
+		"Employee", {"user_id": frappe.session.user, "status": "Active"}, "company"
+	)
+	if not employee_company:
+		return None
+
+	for row in settings.company_caller_ids or []:
+		if row.company == employee_company:
+			return row.caller_id
+
+	return None
 
 
 @frappe.whitelist()
@@ -29,7 +56,7 @@ def click_to_call(
 		frappe.throw(_("Mobile number not set in your User profile."))
 
 	agent = agent_number or user_mobile
-	caller = caller_id or settings.default_caller_id
+	caller = caller_id or get_caller_id_for_user(settings) or settings.default_caller_id
 
 	if not agent:
 		frappe.throw(_("Agent number is not configured."))
