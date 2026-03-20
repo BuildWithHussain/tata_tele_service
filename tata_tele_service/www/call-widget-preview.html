@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Call Widget Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: #e8e6e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .call-widget {
+    --cw-bg: #111113;
+    --cw-surface: #1a1a1f;
+    --cw-border: rgba(255,255,255,0.06);
+    --cw-text: #f0eeeb;
+    --cw-text-dim: rgba(240,238,235,0.5);
+    --cw-green: #34d399;
+    --cw-green-dim: rgba(52,211,153,0.12);
+    --cw-red: #f43f5e;
+    --cw-red-dim: rgba(244,63,94,0.15);
+
+    width: 280px;
+    background: var(--cw-bg);
+    color: var(--cw-text);
+    font-family: 'Instrument Sans', sans-serif;
+    border: 1px solid var(--cw-border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.3),
+      0 4px 16px rgba(0,0,0,0.25),
+      0 16px 48px rgba(0,0,0,0.3);
+    animation: cw-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes cw-enter {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+    }
+  }
+
+  .call-widget-body {
+    padding: 20px;
+  }
+
+  /* ── Status bar ── */
+  .call-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cw-green);
+    box-shadow: 0 0 6px var(--cw-green);
+    animation: cw-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes cw-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .call-status-text {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--cw-green);
+  }
+
+  .call-status-bar .call-type {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--cw-text-dim);
+  }
+
+  /* ── Duration (hero) ── */
+  .call-duration {
+    text-align: center;
+    padding: 8px 0 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 44px;
+    font-weight: 300;
+    color: var(--cw-text);
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+
+  /* ── Contact info ── */
+  .call-contact {
+    background: var(--cw-surface);
+    border: 1px solid var(--cw-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .contact-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #2a2a32, #1a1a22);
+    border: 1px solid var(--cw-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .contact-avatar svg {
+    opacity: 0.5;
+  }
+
+  .contact-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .contact-number {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--cw-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+  }
+
+  .contact-label {
+    font-size: 11px;
+    color: var(--cw-text-dim);
+    margin-top: 1px;
+    font-weight: 500;
+  }
+
+  /* ── Actions ── */
+  .call-actions {
+    display: flex;
+    justify-content: center;
+  }
+
+  .hangup-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--cw-red);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 0 0 var(--cw-red-dim);
+    position: relative;
+  }
+
+  .hangup-btn::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: var(--cw-red-dim);
+    z-index: -1;
+    transition: all 0.2s ease;
+  }
+
+  .hangup-btn:hover {
+    transform: scale(1.06);
+    box-shadow: 0 4px 20px rgba(244,63,94,0.35);
+  }
+
+  .hangup-btn:hover::before {
+    inset: -6px;
+  }
+
+  .hangup-btn:active {
+    transform: scale(0.96);
+  }
+
+  .hangup-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+</style>
+</head>
+<body>
+
+<div class="call-widget">
+  <div class="call-widget-body">
+
+    <div class="call-status-bar">
+      <div class="status-dot"></div>
+      <span class="call-status-text">In Progress</span>
+      <span class="call-type">Outgoing</span>
+    </div>
+
+    <div class="call-duration">04:32</div>
+
+    <div class="call-contact">
+      <div class="contact-avatar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <div class="contact-details">
+        <div class="contact-number">+91 87707 73631</div>
+        <div class="contact-label">Rajagopalan S</div>
+      </div>
+    </div>
+
+    <div class="call-actions">
+      <button class="hangup-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,6 +1,5 @@
-import requests
-
 import frappe
+import requests
 from frappe import _
 from frappe.integrations.utils import create_request_log
 from frappe.model.document import Document
@@ -58,13 +57,21 @@ def _create_crm_call_log(doc: Document) -> None:
 	except Exception:
 		pass
 
+	# For missed incoming calls, agent_number may be None — fall back to DID number
+	if is_incoming:
+		call_from = doc.customer_number
+		call_to = doc.agent_number or doc.did_number or doc.customer_number
+	else:
+		call_from = doc.agent_number
+		call_to = doc.customer_number
+
 	call_log_data = {
 		"doctype": "CRM Call Log",
 		"id": doc.call_id,
 		"type": "Incoming" if is_incoming else "Outgoing",
 		"status": STATUS_MAP.get(doc.status, "Completed"),
-		"from": doc.customer_number if is_incoming else doc.agent_number,
-		"to": doc.agent_number if is_incoming else doc.customer_number,
+		"from": call_from,
+		"to": call_to,
 		"start_time": doc.start_time,
 		"end_time": doc.end_time,
 		"duration": doc.call_duration,
