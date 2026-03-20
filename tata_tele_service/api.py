@@ -1,6 +1,7 @@
 import requests
 
 import frappe
+from frappe import _
 from frappe.integrations.utils import create_request_log
 
 SERVICE_NAME = "Tata Tele Service"
@@ -41,8 +42,22 @@ def tata_tele_request(
 		integration_request.handle_success(data)
 		return data
 
+	except requests.exceptions.HTTPError as exc:
+		error_response = {}
+		try:
+			error_response = exc.response.json()
+		except Exception:
+			error_response = {"status_code": exc.response.status_code, "text": exc.response.text}
+		integration_request.handle_failure(error_response)
+		frappe.log_error(
+			title=f"Tata Tele API Error ({exc.response.status_code})",
+			message=frappe.as_json(error_response),
+		)
+		frappe.throw(
+			_("Tata Tele API error {0}: {1}").format(exc.response.status_code, frappe.as_json(error_response))
+		)
 	except Exception:
-		integration_request.handle_failure(frappe.get_traceback())
+		integration_request.handle_failure({"error": frappe.get_traceback()})
 		raise
 
 
