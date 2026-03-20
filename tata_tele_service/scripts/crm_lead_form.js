@@ -267,6 +267,43 @@ function showCallWidget(destinationNumber, clickToCallResponse, activeCallData) 
     toggleMinimize();
   });
 
+  // ── Drag to reposition ────────────────────────────────────────
+  let dragHeader = expanded.querySelector(".cursor-move");
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let widgetStartX = 0;
+  let widgetStartY = 0;
+
+  dragHeader.addEventListener("mousedown", (e) => {
+    // Don't drag when clicking the minimize button
+    if (e.target.closest("#smartflo-minimize-btn")) return;
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    let rect = widget.getBoundingClientRect();
+    widgetStartX = rect.left;
+    widgetStartY = rect.top;
+    // Switch from bottom/right to top/left positioning on first drag
+    widget.style.bottom = "auto";
+    widget.style.right = "auto";
+    widget.style.left = widgetStartX + "px";
+    widget.style.top = widgetStartY + "px";
+    e.preventDefault();
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    let dx = e.clientX - dragStartX;
+    let dy = e.clientY - dragStartY;
+    widget.style.left = (widgetStartX + dx) + "px";
+    widget.style.top = (widgetStartY + dy) + "px";
+  });
+
+  document.addEventListener("mouseup", () => {
+    isDragging = false;
+  });
+
   // ── Local tick timer ──────────────────────────────────────────
   // Syncs to API call_time on each poll, ticks locally between polls
   let lastKnownSeconds = 0; // total seconds from last API call_time
