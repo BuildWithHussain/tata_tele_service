@@ -42,7 +42,7 @@ class CRMLead {
           let selectedProduct = "";
           createDialog({
             title: "Create Aionion Task",
-            html: '<div style="margin-top:8px"><label class="text-sm text-ink-gray-5" style="display:block;margin-bottom:4px">Product</label><div style="position:relative"><input id="aionion-product-input" type="text" class="form-input" style="width:100%;padding:8px;border:1px solid var(--gray-300);border-radius:8px;font-size:14px" placeholder="Search..." autocomplete="off" /></div></div>',
+            html: '<div style="margin-top:8px"><label class="text-sm text-ink-gray-5" style="display:block;margin-bottom:4px">Product</label><select id="aionion-product-select" class="form-input" style="width:100%;padding:8px 10px;height:38px;border:1px solid var(--gray-300);border-radius:8px;font-size:14px;background:white"><option value="">Loading...</option></select></div>',
             actions: [
               {
                 label: "Create",
@@ -63,50 +63,17 @@ class CRMLead {
               },
             ],
           });
-          setTimeout(() => {
-            let input = document.getElementById("aionion-product-input");
-            let dropdown = document.createElement("div");
-            dropdown.id = "aionion-product-dropdown";
-            dropdown.style.cssText = "display:none;position:fixed;max-height:200px;overflow-y:auto;background:white;border:1px solid var(--gray-300);border-radius:8px;margin-top:4px;z-index:9999;box-shadow:0 4px 6px rgba(0,0,0,0.1)";
-            document.body.appendChild(dropdown);
-            let debounceTimer = null;
-            function doSearch() {
-              clearTimeout(debounceTimer);
-              debounceTimer = setTimeout(() => {
-                call("frappe.desk.search.search_link", {
-                  doctype: "Aionion Product",
-                  txt: input.value || "",
-                }).then((results) => {
-                  if (!results || !results.length) {
-                    dropdown.style.display = "none";
-                    return;
-                  }
-                  dropdown.innerHTML = results.map((r) => '<div class="aionion-opt" data-value="' + r.value + '" style="padding:8px 12px;cursor:pointer;font-size:14px">' + r.value + (r.description ? ' <span style="color:var(--gray-500);font-size:12px">' + r.description + '</span>' : '') + '</div>').join("");
-                  let rect = input.getBoundingClientRect();
-                  dropdown.style.top = rect.bottom + 4 + "px";
-                  dropdown.style.left = rect.left + "px";
-                  dropdown.style.width = rect.width + "px";
-                  dropdown.style.display = "block";
-                  dropdown.querySelectorAll(".aionion-opt").forEach((opt) => {
-                    opt.addEventListener("click", () => {
-                      selectedProduct = opt.dataset.value;
-                      input.value = selectedProduct;
-                      dropdown.style.display = "none";
-                    });
-                    opt.addEventListener("mouseenter", () => { opt.style.background = "var(--gray-100)"; });
-                    opt.addEventListener("mouseleave", () => { opt.style.background = "transparent"; });
-                  });
-                });
-              }, 300);
-            }
-            input.addEventListener("input", doSearch);
-            input.addEventListener("focus", doSearch);
-            document.addEventListener("click", (e) => {
-              if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.style.display = "none";
-              }
+          call("frappe.desk.search.search_link", {
+            doctype: "Aionion Product",
+            txt: "",
+          }).then((results) => {
+            let select = document.getElementById("aionion-product-select");
+            select.innerHTML = '<option value="">Select a product...</option>' +
+              (results || []).map((r) => '<option value="' + r.value + '">' + r.value + '</option>').join("");
+            select.addEventListener("change", () => {
+              selectedProduct = select.value;
             });
-          }, 100);
+          });
         },
       },
     ];
