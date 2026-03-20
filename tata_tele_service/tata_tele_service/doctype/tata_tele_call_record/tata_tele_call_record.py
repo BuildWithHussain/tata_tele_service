@@ -32,6 +32,9 @@ class TataTeleCallRecord(Document):
 
 
 def _create_crm_call_log(doc: Document) -> None:
+	if frappe.db.exists("CRM Call Log", doc.call_id):
+		return
+
 	is_incoming = doc.direction == "inbound"
 
 	# find user by agent_number
@@ -84,10 +87,6 @@ def _create_crm_call_log(doc: Document) -> None:
 			call_log_data["receiver"] = agent_user
 		else:
 			call_log_data["caller"] = agent_user
-
-	if reference_doctype and reference_docname:
-		call_log_data["reference_doctype"] = reference_doctype
-		call_log_data["reference_docname"] = reference_docname
 
 	call_log = frappe.get_doc(call_log_data)
 	call_log.insert(ignore_permissions=True)
