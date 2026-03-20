@@ -165,145 +165,107 @@ function showCallWidget(destinationNumber, clickToCallResponse, activeCallData) 
     callId = data.call_id || data.callid || data.id || null;
   }
 
-  // Inject scoped styles (once)
+  // Phone icon SVG (from CRM PhoneIcon.vue)
+  let phoneIconSvg = '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.67754 2.70675C2.53628 2.84008 2.44787 3.03363 2.46988 3.29885C2.47828 3.40004 2.4869 3.50717 2.49497 3.61981C2.63494 4.75003 2.9076 5.83579 3.29638 6.82863L4.1395 6.29907C5.02533 5.74269 5.45257 4.67951 5.19805 3.66489L4.98918 2.83225C4.93526 2.61729 4.74204 2.46656 4.52043 2.46656H3.36772C3.06265 2.46656 2.82575 2.56686 2.67754 2.70675ZM3.69508 7.71962L4.6536 7.11757C5.89375 6.33864 6.49189 4.85019 6.13556 3.42971L5.9267 2.59708C5.76493 1.9522 5.18528 1.5 4.52043 1.5H3.36772C2.85467 1.5 2.368 1.66981 2.01409 2.00386C1.65323 2.34447 1.46097 2.82869 1.50663 3.3788C1.51521 3.48212 1.52381 3.58915 1.53174 3.70087L1.53262 3.71327L1.53414 3.72561C1.70903 5.14795 2.08181 6.51379 2.62992 7.73832C2.8107 8.1422 3.76654 10.0804 5.03876 11.2498C6.27205 12.3833 6.85696 12.7556 8.29758 13.4488L8.31072 13.4551L8.32421 13.4606C9.77742 14.0548 11.0901 14.3742 12.5272 14.4965C13.6361 14.5909 14.4998 13.677 14.4998 12.6231V11.5096C14.4998 10.8539 14.0598 10.2799 13.4267 10.1095L12.6539 9.90153C11.1864 9.50659 9.63455 10.1384 8.86371 11.4495C8.67966 11.7625 8.49178 12.0826 8.3163 12.3822C7.24188 11.8473 6.72935 11.4908 5.69284 10.5382C4.79599 9.71382 4.04577 8.4042 3.69508 7.71962ZM9.21019 12.7685C10.3726 13.198 11.4466 13.4344 12.6092 13.5334C13.096 13.5749 13.5332 13.1706 13.5332 12.6231V11.5096C13.5332 11.291 13.3866 11.0997 13.1755 11.0429L12.4027 10.8349C11.3541 10.5527 10.2467 11.0044 9.69692 11.9394C9.53381 12.2168 9.3678 12.4995 9.21019 12.7685Z"/></svg>';
+
+  // Inject minimal scoped styles (once) — only for things Tailwind can't do
   if (!document.getElementById("smartflo-call-styles")) {
     let styleEl = document.createElement("style");
     styleEl.id = "smartflo-call-styles";
     styleEl.textContent = `
-      .cw-root {
-        --cw-bg: #111113;
-        --cw-surface: #1a1a1f;
-        --cw-border: rgba(255,255,255,0.06);
-        --cw-text: #f0eeeb;
-        --cw-text-dim: rgba(240,238,235,0.5);
-        --cw-green: #34d399;
-        --cw-red: #f43f5e;
-        --cw-red-dim: rgba(244,63,94,0.15);
-
-        position: fixed; bottom: 24px; right: 24px; z-index: 10000;
-        width: 280px;
-        background: var(--cw-bg);
-        color: var(--cw-text);
-        font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-        border: 1px solid var(--cw-border);
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 0 0 1px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25), 0 16px 48px rgba(0,0,0,0.3);
-        animation: cw-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
-        transition: opacity 0.3s;
-      }
-      @keyframes cw-enter {
-        from { opacity: 0; transform: translateY(12px) scale(0.96); }
-      }
-      .cw-body { padding: 20px; }
-      .cw-status-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
-      .cw-status-dot {
-        width: 6px; height: 6px; border-radius: 50%;
-        background: var(--cw-green); box-shadow: 0 0 6px var(--cw-green);
-        animation: cw-pulse 2s ease-in-out infinite;
-      }
-      @keyframes cw-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-      .cw-status-text {
-        font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
-        text-transform: uppercase; color: var(--cw-green);
-      }
-      .cw-call-type {
-        margin-left: auto; font-size: 10px; font-weight: 500;
-        letter-spacing: 0.04em; text-transform: uppercase; color: var(--cw-text-dim);
-      }
-      .cw-duration {
-        text-align: center; padding: 8px 0 20px;
-        font-family: 'DM Mono', monospace; font-size: 44px; font-weight: 300;
-        color: var(--cw-text); letter-spacing: 0.04em; line-height: 1;
-      }
-      .cw-contact {
-        background: var(--cw-surface); border: 1px solid var(--cw-border);
-        border-radius: 12px; padding: 12px 14px;
-        display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
-      }
-      .cw-avatar {
-        width: 36px; height: 36px; border-radius: 10px;
-        background: linear-gradient(135deg, #2a2a32, #1a1a22);
-        border: 1px solid var(--cw-border);
-        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-      }
-      .cw-avatar svg { opacity: 0.5; }
-      .cw-details { flex: 1; min-width: 0; }
-      .cw-number {
-        font-size: 14px; font-weight: 600; color: var(--cw-text);
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em;
-      }
-      .cw-label { font-size: 11px; color: var(--cw-text-dim); margin-top: 1px; font-weight: 500; }
-      .cw-actions { display: flex; justify-content: center; }
-      .cw-hangup {
-        width: 52px; height: 52px; border-radius: 50%;
-        background: var(--cw-red); border: none; cursor: pointer;
-        display: flex; align-items: center; justify-content: center;
-        transition: all 0.2s ease; position: relative;
-      }
-      .cw-hangup::before {
-        content: ''; position: absolute; inset: -4px; border-radius: 50%;
-        background: var(--cw-red-dim); z-index: -1; transition: all 0.2s ease;
-      }
-      .cw-hangup:hover { transform: scale(1.06); box-shadow: 0 4px 20px rgba(244,63,94,0.35); }
-      .cw-hangup:hover::before { inset: -6px; }
-      .cw-hangup:active { transform: scale(0.96); }
-      .cw-hangup svg { width: 22px; height: 22px; }
+      @keyframes cw-enter { from { opacity: 0; transform: translateY(8px) scale(0.97); } }
+      @keyframes cw-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+      @keyframes cw-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+      .cw-enter { animation: cw-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+      .cw-pulse { animation: cw-pulse 2s ease-in-out infinite; }
+      .cw-blink { animation: cw-blink 1s ease-in-out 6; }
+      .cw-hangup-icon { transform: rotate(135deg); }
     `;
     document.head.appendChild(styleEl);
   }
 
-  // Load fonts (once)
-  if (!document.getElementById("smartflo-call-fonts")) {
-    let link = document.createElement("link");
-    link.id = "smartflo-call-fonts";
-    link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap";
-    document.head.appendChild(link);
-  }
-
-  let statusColor = state === "answered" ? "#34d399" : "#fbbf24";
-  let statusText = state === "answered" ? "In Progress" : state === "ringing" ? "Ringing..." : "Calling...";
+  let isMinimized = false;
+  let statusText = state === "answered" ? "In progress" : state === "ringing" ? "Ringing..." : "Calling...";
   let initialDuration = activeCallData && activeCallData.call_time
     ? (() => { let p = activeCallData.call_time.split(":"); return p.length === 3 && p[0] === "00" ? p[1] + ":" + p[2] : activeCallData.call_time; })()
     : "--:--";
 
-  // Build widget HTML
+  // Build widget container
   let widget = document.createElement("div");
   widget.id = "smartflo-call-widget";
-  widget.className = "cw-root";
-  widget.innerHTML = `
-    <div class="cw-body">
-      <div class="cw-status-bar">
-        <div class="cw-status-dot" style="${state !== "answered" ? "background:#fbbf24;box-shadow:0 0 6px #fbbf24;" : ""}"></div>
-        <span id="smartflo-call-status" class="cw-status-text" style="color:${statusColor}">${statusText}</span>
-        <span class="cw-call-type">Outgoing</span>
-      </div>
-      <div id="smartflo-call-duration" class="cw-duration" style="color:${state === "answered" ? "var(--cw-text)" : "var(--cw-text-dim)"}">
-        ${initialDuration}
-      </div>
-      <div class="cw-contact">
-        <div class="cw-avatar">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-          </svg>
+  widget.style.cssText = "position:fixed;bottom:24px;right:24px;z-index:20;transition:opacity 0.3s;";
+
+  // ── Expanded view ──
+  let expanded = document.createElement("div");
+  expanded.id = "smartflo-expanded";
+  expanded.className = "cw-enter flex flex-col gap-2 rounded-lg bg-surface-gray-7 p-4 pt-2.5 text-ink-gray-2 shadow-2xl";
+  expanded.style.width = "280px";
+  expanded.innerHTML = `
+    <div class="flex items-center justify-between gap-1 text-base cursor-move select-none">
+      <div class="flex items-center gap-2 flex-1 min-w-0">
+        <div class="size-8 rounded-full bg-surface-gray-6 flex items-center justify-content text-ink-gray-4 shrink-0" style="display:flex;align-items:center;justify-content:center;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
-        <div class="cw-details">
-          <div id="smartflo-call-number" class="cw-number">${destinationNumber}</div>
-          <div id="smartflo-call-label" class="cw-label"></div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-medium text-ink-white truncate">${destinationNumber}</div>
+          <div class="flex items-center gap-1 text-xs">
+            <div id="smartflo-dot" class="cw-pulse shrink-0" style="width:6px;height:6px;border-radius:50%;background:var(--surface-green-3,rgb(48,166,109))"></div>
+            <span id="smartflo-call-status" style="color:var(--surface-green-3,rgb(48,166,109))">${statusText}</span>
+          </div>
         </div>
       </div>
-      <div class="cw-actions">
-        <button id="smartflo-hangup-btn" class="cw-hangup">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/>
-            <line x1="1" y1="1" x2="23" y2="23"/>
-          </svg>
-        </button>
+      <button id="smartflo-minimize-btn" class="size-7 rounded-md flex items-center justify-center text-ink-white hover:bg-surface-gray-6 shrink-0" style="border:none;background:transparent;cursor:pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/></svg>
+      </button>
+    </div>
+    <div class="flex flex-col items-center py-4 gap-1">
+      <div class="size-12 rounded-full bg-surface-gray-6 flex items-center justify-center text-ink-gray-4" style="display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </div>
+      <div class="text-sm text-ink-gray-4">${destinationNumber}</div>
+    </div>
+    <div id="smartflo-call-duration" class="text-center text-sm text-ink-gray-4 pb-3" style="font-variant-numeric:tabular-nums;">${initialDuration}</div>
+    <div class="flex justify-center pb-1">
+      <button id="smartflo-hangup-btn" class="size-10 rounded-full bg-surface-red-5 hover:bg-surface-red-6 flex items-center justify-center text-ink-white" style="border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+        <span class="cw-hangup-icon" style="display:flex">${phoneIconSvg}</span>
+      </button>
     </div>
   `;
+
+  // ── Collapsed pill ──
+  let pill = document.createElement("div");
+  pill.id = "smartflo-pill";
+  pill.className = "cw-enter flex cursor-pointer select-none items-center justify-between gap-1 rounded-full bg-surface-gray-7 px-2 text-base text-ink-gray-2";
+  pill.style.cssText = "padding-top:7px;padding-bottom:7px;display:none;";
+  pill.innerHTML = `
+    <div class="size-5 rounded-full bg-surface-gray-6 flex items-center justify-center text-ink-gray-4 shrink-0" style="display:flex;align-items:center;justify-content:center;">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <span id="smartflo-pill-number" class="text-xs text-ink-white" style="white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;">${destinationNumber}</span>
+    <span class="text-xs text-ink-gray-4">&middot;</span>
+    <span id="smartflo-pill-duration" class="text-xs text-ink-gray-4" style="font-variant-numeric:tabular-nums;">${initialDuration}</span>
+    <button id="smartflo-pill-hangup" class="size-6 rounded-full bg-surface-red-5 hover:bg-surface-red-6 flex items-center justify-center text-ink-white shrink-0" style="border:none;cursor:pointer;margin-left:2px;display:flex;align-items:center;justify-content:center;">
+      <span class="cw-hangup-icon" style="display:flex"><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.67754 2.70675C2.53628 2.84008 2.44787 3.03363 2.46988 3.29885C2.47828 3.40004 2.4869 3.50717 2.49497 3.61981C2.63494 4.75003 2.9076 5.83579 3.29638 6.82863L4.1395 6.29907C5.02533 5.74269 5.45257 4.67951 5.19805 3.66489L4.98918 2.83225C4.93526 2.61729 4.74204 2.46656 4.52043 2.46656H3.36772C3.06265 2.46656 2.82575 2.56686 2.67754 2.70675ZM3.69508 7.71962L4.6536 7.11757C5.89375 6.33864 6.49189 4.85019 6.13556 3.42971L5.9267 2.59708C5.76493 1.9522 5.18528 1.5 4.52043 1.5H3.36772C2.85467 1.5 2.368 1.66981 2.01409 2.00386C1.65323 2.34447 1.46097 2.82869 1.50663 3.3788C1.51521 3.48212 1.52381 3.58915 1.53174 3.70087L1.53262 3.71327L1.53414 3.72561C1.70903 5.14795 2.08181 6.51379 2.62992 7.73832C2.8107 8.1422 3.76654 10.0804 5.03876 11.2498C6.27205 12.3833 6.85696 12.7556 8.29758 13.4488L8.31072 13.4551L8.32421 13.4606C9.77742 14.0548 11.0901 14.3742 12.5272 14.4965C13.6361 14.5909 14.4998 13.677 14.4998 12.6231V11.5096C14.4998 10.8539 14.0598 10.2799 13.4267 10.1095L12.6539 9.90153C11.1864 9.50659 9.63455 10.1384 8.86371 11.4495C8.67966 11.7625 8.49178 12.0826 8.3163 12.3822C7.24188 11.8473 6.72935 11.4908 5.69284 10.5382C4.79599 9.71382 4.04577 8.4042 3.69508 7.71962ZM9.21019 12.7685C10.3726 13.198 11.4466 13.4344 12.6092 13.5334C13.096 13.5749 13.5332 13.1706 13.5332 12.6231V11.5096C13.5332 11.291 13.3866 11.0997 13.1755 11.0429L12.4027 10.8349C11.3541 10.5527 10.2467 11.0044 9.69692 11.9394C9.53381 12.2168 9.3678 12.4995 9.21019 12.7685Z"/></svg></span>
+    </button>
+  `;
+
+  widget.appendChild(expanded);
+  widget.appendChild(pill);
   document.body.appendChild(widget);
+
+  // ── Minimize / Expand toggle ──
+  function toggleMinimize() {
+    isMinimized = !isMinimized;
+    expanded.style.display = isMinimized ? "none" : "";
+    pill.style.display = isMinimized ? "flex" : "none";
+  }
+
+  document.getElementById("smartflo-minimize-btn").addEventListener("click", toggleMinimize);
+  pill.addEventListener("click", (e) => {
+    // Don't expand if clicking the hangup button
+    if (e.target.closest("#smartflo-pill-hangup")) return;
+    toggleMinimize();
+  });
 
   // ── Local tick timer ──────────────────────────────────────────
   // Syncs to API call_time on each poll, ticks locally between polls
@@ -338,11 +300,12 @@ function showCallWidget(destinationNumber, clickToCallResponse, activeCallData) 
   }
 
   function tickDuration() {
-    let durationEl = document.getElementById("smartflo-call-duration");
-    if (!durationEl) return;
     let elapsed = Math.floor((Date.now() - lastSyncedAt) / 1000);
-    durationEl.textContent = formatDuration(lastKnownSeconds + elapsed);
-    durationEl.style.color = "#f0eeeb";
+    let text = formatDuration(lastKnownSeconds + elapsed);
+    let durationEl = document.getElementById("smartflo-call-duration");
+    if (durationEl) durationEl.textContent = text;
+    let pillDur = document.getElementById("smartflo-pill-duration");
+    if (pillDur) pillDur.textContent = text;
   }
 
   // Seed from activeCallData if resuming
@@ -386,31 +349,23 @@ function showCallWidget(destinationNumber, clickToCallResponse, activeCallData) 
 
       if (ourCall) {
         let apiState = (ourCall.state || "").toLowerCase();
+        let dotEl = document.getElementById("smartflo-dot");
+        let greenColor = "var(--surface-green-3,rgb(48,166,109))";
 
-        let dotEl = widget.querySelector(".cw-status-dot");
         if (apiState.includes("answer") || apiState.includes("bridge")) {
           state = "answered";
-          statusEl.textContent = "In Progress";
-          statusEl.style.color = "#34d399";
-          if (dotEl) { dotEl.style.background = "#34d399"; dotEl.style.boxShadow = "0 0 6px #34d399"; }
-          if (ourCall.call_time) {
-            syncFromApi(ourCall.call_time);
-          }
+          statusEl.textContent = "In progress";
+          statusEl.style.color = greenColor;
+          if (dotEl) dotEl.style.background = greenColor;
+          if (ourCall.call_time) syncFromApi(ourCall.call_time);
         } else if (apiState.includes("ring") || apiState.includes("dial")) {
           state = "ringing";
           statusEl.textContent = "Ringing...";
-          statusEl.style.color = "#fbbf24";
-          if (dotEl) { dotEl.style.background = "#fbbf24"; dotEl.style.boxShadow = "0 0 6px #fbbf24"; }
+          statusEl.style.color = greenColor;
+          if (dotEl) dotEl.style.background = greenColor;
         } else {
           statusEl.textContent = ourCall.state || "Active";
-          statusEl.style.color = "rgba(240,238,235,0.5)";
-        }
-
-        if (ourCall.agent_name) {
-          let labelEl = document.getElementById("smartflo-call-label");
-          if (labelEl && !labelEl.textContent) {
-            labelEl.textContent = ourCall.agent_name;
-          }
+          statusEl.style.color = "var(--text-ink-gray-4,rgb(153,153,153))";
         }
       } else if (state === "answered" || state === "ringing") {
         endCall("Call Ended");
@@ -422,39 +377,41 @@ function showCallWidget(destinationNumber, clickToCallResponse, activeCallData) 
   setTimeout(pollCallStatus, 2000);
 
   // ── Hang up ───────────────────────────────────────────────────
-  let hangupBtn = document.getElementById("smartflo-hangup-btn");
-  if (hangupBtn) {
-    hangupBtn.addEventListener("click", () => {
-      hangupBtn.disabled = true;
-      hangupBtn.style.opacity = "0.5";
-      hangupBtn.style.cursor = "not-allowed";
-
-      if (callId) {
-        call(
-          "tata_tele_service.tata_tele_service.doctype.tata_tele_settings.tata_tele_settings.hangup_call",
-          { call_id: callId },
-        ).then(() => {
-          endCall("Call Ended");
-        }).catch(() => {
-          endCall("Call Ended");
-        });
-      } else {
-        endCall("Call Ended");
-      }
-    });
+  function doHangup(btn) {
+    if (btn) { btn.disabled = true; btn.style.opacity = "0.5"; btn.style.cursor = "not-allowed"; }
+    if (callId) {
+      call(
+        "tata_tele_service.tata_tele_service.doctype.tata_tele_settings.tata_tele_settings.hangup_call",
+        { call_id: callId },
+      ).then(() => endCall("Call ended")).catch(() => endCall("Call ended"));
+    } else {
+      endCall("Call ended");
+    }
   }
+
+  document.getElementById("smartflo-hangup-btn").addEventListener("click", (e) => doHangup(e.currentTarget));
+  document.getElementById("smartflo-pill-hangup").addEventListener("click", (e) => { e.stopPropagation(); doHangup(e.currentTarget); });
 
   function endCall(message) {
     stopPolling();
+    let redColor = "var(--text-ink-red-3,rgb(181,42,42))";
     let statusEl = document.getElementById("smartflo-call-status");
     if (statusEl) {
       statusEl.textContent = message;
-      statusEl.style.color = "#f43f5e";
+      statusEl.style.color = redColor;
+      statusEl.classList.add("cw-blink");
     }
-    let dotEl = widget.querySelector(".cw-status-dot");
-    if (dotEl) { dotEl.style.background = "#f43f5e"; dotEl.style.boxShadow = "0 0 6px #f43f5e"; dotEl.style.animation = "none"; }
+    let dotEl = document.getElementById("smartflo-dot");
+    if (dotEl) { dotEl.style.background = redColor; dotEl.className = ""; }
+    // Hide hangup buttons
     let hangup = document.getElementById("smartflo-hangup-btn");
     if (hangup) hangup.style.display = "none";
+    let pillHangup = document.getElementById("smartflo-pill-hangup");
+    if (pillHangup) pillHangup.style.display = "none";
+    // Update pill text
+    let pillDur = document.getElementById("smartflo-pill-duration");
+    if (pillDur) { pillDur.textContent = message; pillDur.style.color = redColor; }
+    // Auto-dismiss after 3 seconds
     setTimeout(() => {
       let w = document.getElementById("smartflo-call-widget");
       if (w) {

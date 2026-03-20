@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Call Widget Preview</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   body {
     margin: 0;
@@ -15,230 +12,403 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 48px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
-  .call-widget {
-    --cw-bg: #111113;
-    --cw-surface: #1a1a1f;
-    --cw-border: rgba(255,255,255,0.06);
-    --cw-text: #f0eeeb;
-    --cw-text-dim: rgba(240,238,235,0.5);
-    --cw-green: #34d399;
-    --cw-green-dim: rgba(52,211,153,0.12);
-    --cw-red: #f43f5e;
-    --cw-red-dim: rgba(244,63,94,0.15);
+  /* ── Frappe UI design tokens (light mode gray scale) ── */
+  /* gray-50: rgb(248,248,248)  gray-100: rgb(243,243,243)
+     gray-200: rgb(237,237,237) gray-300: rgb(226,226,226)
+     gray-400: rgb(199,199,199) gray-500: rgb(153,153,153)
+     gray-600: rgb(124,124,124) gray-700: rgb(82,82,82)
+     gray-800: rgb(56,56,56)    gray-900: rgb(23,23,23)
+     red-700: rgb(181,42,42)    red-800: rgb(148,31,31)
+     green-600: rgb(48,166,109) */
 
+  .cw-root {
+    --cw-surface-7: rgb(23,23,23);     /* gray-900 — main bg */
+    --cw-surface-6: rgb(56,56,56);     /* gray-800 — buttons/cards */
+    --cw-surface-5: rgb(82,82,82);     /* gray-700 — hover */
+    --cw-ink-2: rgb(226,226,226);      /* gray-300 — primary text */
+    --cw-ink-4: rgb(153,153,153);      /* gray-500 — secondary text */
+    --cw-ink-white: rgb(248,248,248);  /* gray-50 — bright text */
+    --cw-red-5: rgb(181,42,42);        /* red-700 — hangup */
+    --cw-red-6: rgb(148,31,31);        /* red-800 — hangup hover */
+    --cw-green-3: rgb(48,166,109);     /* green-600 — active status */
+    --cw-red-text: rgb(181,42,42);     /* red-700 — ended status */
+  }
+
+  /* ── Expanded call widget ── */
+  .cw-root {
     width: 280px;
-    background: var(--cw-bg);
-    color: var(--cw-text);
-    font-family: 'Instrument Sans', sans-serif;
-    border: 1px solid var(--cw-border);
-    border-radius: 20px;
+    background: var(--cw-surface-7);
+    color: var(--cw-ink-2);
+    border-radius: 8px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
     overflow: hidden;
-    box-shadow:
-      0 0 0 1px rgba(0,0,0,0.3),
-      0 4px 16px rgba(0,0,0,0.25),
-      0 16px 48px rgba(0,0,0,0.3);
-    animation: cw-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: cw-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+    transition: opacity 0.3s;
+    font-size: 14px;
+    line-height: 1.4;
   }
 
   @keyframes cw-enter {
-    from {
-      opacity: 0;
-      transform: translateY(12px) scale(0.96);
-    }
+    from { opacity: 0; transform: translateY(8px) scale(0.97); }
   }
 
-  .call-widget-body {
-    padding: 20px;
+  .cw-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
-  /* ── Status bar ── */
-  .call-status-bar {
+  /* ── Header: minimize btn ── */
+  .cw-header {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 20px;
+    justify-content: space-between;
+    cursor: move;
+    user-select: none;
   }
 
-  .status-dot {
-    width: 6px;
-    height: 6px;
+  .cw-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cw-avatar {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background: var(--cw-green);
-    box-shadow: 0 0 6px var(--cw-green);
-    animation: cw-pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes cw-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-
-  .call-status-text {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--cw-green);
-  }
-
-  .call-status-bar .call-type {
-    margin-left: auto;
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--cw-text-dim);
-  }
-
-  /* ── Duration (hero) ── */
-  .call-duration {
-    text-align: center;
-    padding: 8px 0 20px;
-    font-family: 'DM Mono', monospace;
-    font-size: 44px;
-    font-weight: 300;
-    color: var(--cw-text);
-    letter-spacing: 0.04em;
-    line-height: 1;
-  }
-
-  /* ── Contact info ── */
-  .call-contact {
-    background: var(--cw-surface);
-    border: 1px solid var(--cw-border);
-    border-radius: 12px;
-    padding: 12px 14px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-
-  .contact-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #2a2a32, #1a1a22);
-    border: 1px solid var(--cw-border);
+    background: var(--cw-surface-6);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
   }
 
-  .contact-avatar svg {
-    opacity: 0.5;
+  .cw-avatar svg {
+    color: var(--cw-ink-4);
   }
 
-  .contact-details {
+  .cw-contact-info {
     flex: 1;
     min-width: 0;
   }
 
-  .contact-number {
+  .cw-number {
     font-size: 14px;
-    font-weight: 600;
-    color: var(--cw-text);
+    font-weight: 500;
+    color: var(--cw-ink-white);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    letter-spacing: -0.01em;
   }
 
-  .contact-label {
-    font-size: 11px;
-    color: var(--cw-text-dim);
-    margin-top: 1px;
+  .cw-status {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .cw-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cw-green-3);
+    animation: cw-pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes cw-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .cw-status-text {
+    color: var(--cw-green-3);
+  }
+
+  .cw-header-actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .cw-icon-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--cw-ink-white);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+
+  .cw-icon-btn:hover {
+    background: var(--cw-surface-6);
+  }
+
+  /* ── Contact card (body) ── */
+  .cw-contact-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0 8px;
+    gap: 4px;
+  }
+
+  .cw-contact-card .cw-avatar-lg {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--cw-surface-6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .cw-contact-card .cw-avatar-lg svg {
+    color: var(--cw-ink-4);
+  }
+
+  .cw-contact-name {
+    font-size: 16px;
     font-weight: 500;
+    color: var(--cw-ink-white);
+  }
+
+  .cw-contact-phone {
+    font-size: 13px;
+    color: var(--cw-ink-4);
+  }
+
+  /* ── Duration ── */
+  .cw-duration {
+    text-align: center;
+    padding: 4px 0 12px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: var(--cw-ink-4);
   }
 
   /* ── Actions ── */
-  .call-actions {
+  .cw-actions {
     display: flex;
     justify-content: center;
+    gap: 16px;
+    padding-bottom: 4px;
   }
 
-  .hangup-btn {
-    width: 52px;
-    height: 52px;
+  .cw-hangup {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: var(--cw-red);
+    background: var(--cw-red-5);
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    box-shadow: 0 0 0 0 var(--cw-red-dim);
-    position: relative;
+    transition: background 0.15s;
+    color: var(--cw-ink-white);
   }
 
-  .hangup-btn::before {
-    content: '';
-    position: absolute;
-    inset: -4px;
+  .cw-hangup:hover {
+    background: var(--cw-red-6);
+  }
+
+  .cw-hangup svg {
+    transform: rotate(135deg);
+  }
+
+  /* ── Collapsed pill ── */
+  .cw-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--cw-surface-7);
+    color: var(--cw-ink-2);
+    border-radius: 999px;
+    padding: 7px 8px;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    font-size: 14px;
+    animation: cw-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .cw-pill .cw-pill-avatar {
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: var(--cw-red-dim);
-    z-index: -1;
-    transition: all 0.2s ease;
+    background: var(--cw-surface-6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
 
-  .hangup-btn:hover {
-    transform: scale(1.06);
-    box-shadow: 0 4px 20px rgba(244,63,94,0.35);
+  .cw-pill .cw-pill-avatar svg {
+    color: var(--cw-ink-4);
   }
 
-  .hangup-btn:hover::before {
-    inset: -6px;
+  .cw-pill-name {
+    font-size: 13px;
+    color: var(--cw-ink-white);
+    white-space: nowrap;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .hangup-btn:active {
-    transform: scale(0.96);
+  .cw-pill-sep {
+    color: var(--cw-ink-4);
+    font-size: 12px;
   }
 
-  .hangup-btn svg {
-    width: 22px;
-    height: 22px;
+  .cw-pill-duration {
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: var(--cw-ink-4);
+  }
+
+  .cw-pill-hangup {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--cw-red-5);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cw-ink-white);
+    transition: background 0.15s;
+    flex-shrink: 0;
+    margin-left: 2px;
+  }
+
+  .cw-pill-hangup:hover {
+    background: var(--cw-red-6);
+  }
+
+  .cw-pill-hangup svg {
+    transform: rotate(135deg);
+  }
+
+  /* ── Blink animation for ended state ── */
+  @keyframes cw-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .cw-blink {
+    animation: cw-blink 1s ease-in-out 6;
+  }
+
+  /* ── Preview layout helper ── */
+  .preview-label {
+    text-align: center;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+
+  .preview-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 </style>
 </head>
 <body>
 
-<div class="call-widget">
-  <div class="call-widget-body">
+<!-- ── Expanded view ── -->
+<div class="preview-col">
+  <div class="preview-label">Expanded</div>
+  <div class="cw-root">
+    <div class="cw-body">
 
-    <div class="call-status-bar">
-      <div class="status-dot"></div>
-      <span class="call-status-text">In Progress</span>
-      <span class="call-type">Outgoing</span>
-    </div>
-
-    <div class="call-duration">04:32</div>
-
-    <div class="call-contact">
-      <div class="contact-avatar">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
-        </svg>
+      <div class="cw-header">
+        <div class="cw-header-left">
+          <div class="cw-avatar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="cw-contact-info">
+            <div class="cw-number">+91 87707 73631</div>
+            <div class="cw-status">
+              <div class="cw-status-dot"></div>
+              <span class="cw-status-text">In progress</span>
+            </div>
+          </div>
+        </div>
+        <div class="cw-header-actions">
+          <!-- Minimize button -->
+          <button class="cw-icon-btn" title="Minimize">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M5 12h14"/>
+            </svg>
+          </button>
+        </div>
       </div>
-      <div class="contact-details">
-        <div class="contact-number">+91 87707 73631</div>
-        <div class="contact-label">Rajagopalan S</div>
+
+      <div class="cw-contact-card">
+        <div class="cw-avatar-lg">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div class="cw-contact-phone">+91 87707 73631</div>
       </div>
-    </div>
 
-    <div class="call-actions">
-      <button class="hangup-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/>
-          <line x1="1" y1="1" x2="23" y2="23"/>
-        </svg>
-      </button>
-    </div>
+      <div class="cw-duration">04:32</div>
 
+      <div class="cw-actions">
+        <button class="cw-hangup" title="Hang up">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M2.67754 2.70675C2.53628 2.84008 2.44787 3.03363 2.46988 3.29885C2.47828 3.40004 2.4869 3.50717 2.49497 3.61981C2.63494 4.75003 2.9076 5.83579 3.29638 6.82863L4.1395 6.29907C5.02533 5.74269 5.45257 4.67951 5.19805 3.66489L4.98918 2.83225C4.93526 2.61729 4.74204 2.46656 4.52043 2.46656H3.36772C3.06265 2.46656 2.82575 2.56686 2.67754 2.70675ZM3.69508 7.71962L4.6536 7.11757C5.89375 6.33864 6.49189 4.85019 6.13556 3.42971L5.9267 2.59708C5.76493 1.9522 5.18528 1.5 4.52043 1.5H3.36772C2.85467 1.5 2.368 1.66981 2.01409 2.00386C1.65323 2.34447 1.46097 2.82869 1.50663 3.3788C1.51521 3.48212 1.52381 3.58915 1.53174 3.70087L1.53262 3.71327L1.53414 3.72561C1.70903 5.14795 2.08181 6.51379 2.62992 7.73832C2.8107 8.1422 3.76654 10.0804 5.03876 11.2498C6.27205 12.3833 6.85696 12.7556 8.29758 13.4488L8.31072 13.4551L8.32421 13.4606C9.77742 14.0548 11.0901 14.3742 12.5272 14.4965C13.6361 14.5909 14.4998 13.677 14.4998 12.6231V11.5096C14.4998 10.8539 14.0598 10.2799 13.4267 10.1095L12.6539 9.90153C11.1864 9.50659 9.63455 10.1384 8.86371 11.4495C8.67966 11.7625 8.49178 12.0826 8.3163 12.3822C7.24188 11.8473 6.72935 11.4908 5.69284 10.5382C4.79599 9.71382 4.04577 8.4042 3.69508 7.71962ZM9.21019 12.7685C10.3726 13.198 11.4466 13.4344 12.6092 13.5334C13.096 13.5749 13.5332 13.1706 13.5332 12.6231V11.5096C13.5332 11.291 13.3866 11.0997 13.1755 11.0429L12.4027 10.8349C11.3541 10.5527 10.2467 11.0044 9.69692 11.9394C9.53381 12.2168 9.3678 12.4995 9.21019 12.7685Z"/>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Collapsed pill view ── -->
+<div class="preview-col">
+  <div class="preview-label">Collapsed</div>
+  <div class="cw-pill">
+    <div class="cw-pill-avatar">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+      </svg>
+    </div>
+    <span class="cw-pill-name">+91 87707 73631</span>
+    <span class="cw-pill-sep">&middot;</span>
+    <span class="cw-pill-duration">04:32</span>
+    <button class="cw-pill-hangup" title="Hang up">
+      <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M2.67754 2.70675C2.53628 2.84008 2.44787 3.03363 2.46988 3.29885C2.47828 3.40004 2.4869 3.50717 2.49497 3.61981C2.63494 4.75003 2.9076 5.83579 3.29638 6.82863L4.1395 6.29907C5.02533 5.74269 5.45257 4.67951 5.19805 3.66489L4.98918 2.83225C4.93526 2.61729 4.74204 2.46656 4.52043 2.46656H3.36772C3.06265 2.46656 2.82575 2.56686 2.67754 2.70675ZM3.69508 7.71962L4.6536 7.11757C5.89375 6.33864 6.49189 4.85019 6.13556 3.42971L5.9267 2.59708C5.76493 1.9522 5.18528 1.5 4.52043 1.5H3.36772C2.85467 1.5 2.368 1.66981 2.01409 2.00386C1.65323 2.34447 1.46097 2.82869 1.50663 3.3788C1.51521 3.48212 1.52381 3.58915 1.53174 3.70087L1.53262 3.71327L1.53414 3.72561C1.70903 5.14795 2.08181 6.51379 2.62992 7.73832C2.8107 8.1422 3.76654 10.0804 5.03876 11.2498C6.27205 12.3833 6.85696 12.7556 8.29758 13.4488L8.31072 13.4551L8.32421 13.4606C9.77742 14.0548 11.0901 14.3742 12.5272 14.4965C13.6361 14.5909 14.4998 13.677 14.4998 12.6231V11.5096C14.4998 10.8539 14.0598 10.2799 13.4267 10.1095L12.6539 9.90153C11.1864 9.50659 9.63455 10.1384 8.86371 11.4495C8.67966 11.7625 8.49178 12.0826 8.3163 12.3822C7.24188 11.8473 6.72935 11.4908 5.69284 10.5382C4.79599 9.71382 4.04577 8.4042 3.69508 7.71962ZM9.21019 12.7685C10.3726 13.198 11.4466 13.4344 12.6092 13.5334C13.096 13.5749 13.5332 13.1706 13.5332 12.6231V11.5096C13.5332 11.291 13.3866 11.0997 13.1755 11.0429L12.4027 10.8349C11.3541 10.5527 10.2467 11.0044 9.69692 11.9394C9.53381 12.2168 9.3678 12.4995 9.21019 12.7685Z"/>
+      </svg>
+    </button>
   </div>
 </div>
 
