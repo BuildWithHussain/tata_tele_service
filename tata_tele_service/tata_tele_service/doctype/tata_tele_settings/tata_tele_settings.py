@@ -70,11 +70,7 @@ def get_live_calls() -> dict:
 	all_calls = response if isinstance(response, list) else (response.get("data") or [])
 	agent_digits = _normalize_number(user_mobile)
 
-	my_calls = [
-		c
-		for c in all_calls
-		if _normalize_number(c.get("source", "")) == agent_digits
-	]
+	my_calls = [c for c in all_calls if _normalize_number(c.get("source", "")) == agent_digits]
 
 	return {"status": "success", "data": my_calls, "agent_number": user_mobile}
 

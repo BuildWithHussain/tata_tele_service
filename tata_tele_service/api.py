@@ -1,6 +1,5 @@
-import requests
-
 import frappe
+import requests
 from frappe import _
 from frappe.integrations.utils import create_request_log
 
