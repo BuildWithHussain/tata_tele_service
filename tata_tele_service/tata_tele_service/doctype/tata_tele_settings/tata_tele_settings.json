@@ -9,10 +9,7 @@
   "api_base_url",
   "access_token",
   "column_break_defaults",
-  "default_agent_number",
-  "default_caller_id",
-  "company_caller_ids_section",
-  "company_caller_ids"
+  "default_agent_number"
  ],
  "fields": [
   {
@@ -42,22 +39,6 @@
    "fieldtype": "Data",
    "label": "Default Agent Number",
    "reqd": 1
-  },
-  {
-   "fieldname": "default_caller_id",
-   "fieldtype": "Data",
-   "label": "Default Caller ID"
-  },
-  {
-   "fieldname": "company_caller_ids_section",
-   "fieldtype": "Section Break",
-   "label": "Company Caller IDs"
-  },
-  {
-   "fieldname": "company_caller_ids",
-   "fieldtype": "Table",
-   "label": "Company Caller IDs",
-   "options": "Company Caller ID"
   }
  ],
  "index_web_pages_for_search": 1,

@@ -21,12 +21,6 @@ frappe.ui.form.on("Tata Tele Settings", {
 						fieldtype: "Data",
 						reqd: 1,
 					},
-					{
-						label: __("Caller ID"),
-						fieldname: "caller_id",
-						fieldtype: "Data",
-						default: frm.doc.default_caller_id || "",
-					},
 				],
 				primary_action_label: __("Call"),
 				primary_action(values) {
