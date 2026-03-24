@@ -120,6 +120,9 @@
 		"after": true,
 		"qz": true,
 		"localforage": true,
-		"extend_cscript": true
+		"extend_cscript": true,
+		"createDialog": true,
+		"toast": true,
+		"call": true
 	}
 }
