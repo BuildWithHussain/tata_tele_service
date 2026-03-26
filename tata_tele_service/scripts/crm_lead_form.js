@@ -1,16 +1,14 @@
-class CRMLead {
-	onLoad() {
-		let doc = this.doc;
+function setupForm({ doc, call, toast, $dialog }) {
+	// Check for any active calls on page load — resume widget if agent is on a call
+	checkForActiveCalls("CRM Lead", doc.name, call, toast);
 
-		// Check for any active calls on page load — resume widget if agent is on a call
-		checkForActiveCalls();
-
-		this.actions = [
+	return {
+		actions: [
 			{
 				label: "Make a call",
 				onClick: () => {
 					let defaultNumber = doc.mobile_no || doc.phone || "";
-					createDialog({
+					$dialog({
 						title: "Make a call",
 						html:
 							'<div style="margin-top:8px"><label class="text-sm text-ink-gray-5" style="display:block;margin-bottom:4px">Destination Number</label><input id="smartflo-dest" type="text" value="' +
@@ -31,7 +29,7 @@ class CRMLead {
 										{ destination_number: num }
 									).then((r) => {
 										close();
-										showCallWidget(num, r);
+										showCallWidget(num, r, null, "CRM Lead", doc.name, call, toast);
 									});
 								},
 							},
@@ -43,7 +41,7 @@ class CRMLead {
 				label: "Create Task",
 				onClick: () => {
 					let selectedProduct = "";
-					createDialog({
+					$dialog({
 						title: "Create Aionion Task",
 						html: '<div style="margin-top:8px"><label class="text-sm text-ink-gray-5" style="display:block;margin-bottom:4px">Product</label><select id="aionion-product-select" class="form-input" style="width:100%;padding:8px 10px;height:38px;border:1px solid var(--gray-300);border-radius:8px;font-size:14px;background:white"><option value="">Loading...</option></select></div>',
 						actions: [
@@ -85,37 +83,46 @@ class CRMLead {
 					});
 				},
 			},
-		];
-	}
+		],
+	};
 }
 
-// ── Check for active calls on page load ──────────────────────────
-function checkForActiveCalls() {
-	// Don't check if widget is already showing
-	if (document.getElementById("smartflo-call-widget")) return;
+// ── Poll for incoming calls on form view ─────────────────────────
+function checkForActiveCalls(referenceDoctype, referenceDocname, call, toast) {
+	let _shownCallIds = new Set();
 
-	call(
-		"tata_tele_service.tata_tele_service.doctype.tata_tele_settings.tata_tele_settings.get_live_calls",
-		{}
-	)
-		.then((r) => {
-			if (!r || !r.agent_number) return; // No mobile configured — skip
-			let liveCalls = Array.isArray(r.data) ? r.data : [];
-			if (liveCalls.length === 0) return;
+	function poll() {
+		// Don't poll if widget is already showing
+		if (document.getElementById("smartflo-call-widget")) return;
 
-			// Show widget for the first active call (agent is already filtered server-side)
-			let activeCall = liveCalls[0];
-			let destNumber = activeCall.customer_number || activeCall.destination || "";
-			showCallWidget(destNumber, null, activeCall);
-		})
-		.catch(() => {
-			// Silently ignore — agent may not have mobile configured
-		});
+		call(
+			"tata_tele_service.tata_tele_service.doctype.tata_tele_settings.tata_tele_settings.get_live_calls",
+			{}
+		)
+			.then((r) => {
+				if (!r || !r.agent_number) return;
+				let liveCalls = Array.isArray(r.data) ? r.data : [];
+
+				for (let c of liveCalls) {
+					let cid = c.call_id;
+					if (!cid || _shownCallIds.has(cid)) continue;
+
+					_shownCallIds.add(cid);
+					let callerNumber = c.customer_number || c.source || "";
+					showCallWidget(callerNumber, null, c, referenceDoctype, referenceDocname, call, toast);
+					break;
+				}
+			})
+			.catch(() => {});
+	}
+
+	setInterval(poll, 2500);
+	poll();
 }
 
 // ── Live Call Widget ──────────────────────────────────────────────
 // activeCallData: if provided, we're resuming an existing call (from page load check)
-function showCallWidget(destinationNumber, clickToCallResponse, activeCallData) {
+function showCallWidget(destinationNumber, clickToCallResponse, activeCallData, referenceDoctype, referenceDocname, call, toast) {
 	// Remove any existing widget
 	let existing = document.getElementById("smartflo-call-widget");
 	if (existing) existing.remove();
@@ -213,6 +220,19 @@ function showCallWidget(destinationNumber, clickToCallResponse, activeCallData) 
       <div class="text-sm text-ink-gray-4">${destinationNumber}</div>
     </div>
     <div id="smartflo-call-duration" class="text-center text-sm text-ink-gray-4 pb-3" style="font-variant-numeric:tabular-nums;">${initialDuration}</div>
+    <div id="smartflo-note-section" class="flex flex-col gap-1.5">
+      <button id="smartflo-note-toggle" class="flex items-center gap-1 text-xs text-ink-gray-4 hover:text-ink-white" style="border:none;background:transparent;cursor:pointer;padding:0;">
+        <svg id="smartflo-note-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;transform:rotate(0deg)"><polyline points="9 18 15 12 9 6"/></svg>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Add Note
+      </button>
+      <div id="smartflo-note-body" style="display:none;" class="flex flex-col gap-1.5">
+        <textarea id="smartflo-note-input" placeholder="Type your note here..." rows="3" class="text-xs" style="width:100%;padding:6px 8px;border:1px solid var(--gray-600);border-radius:6px;background:var(--surface-gray-6,#374151);color:var(--ink-white,#fff);resize:vertical;font-family:inherit;outline:none;min-height:60px;"></textarea>
+        <button id="smartflo-note-save" class="text-xs rounded-md px-2 py-1 text-ink-white self-end" style="border:none;cursor:pointer;background:var(--surface-blue-4,#3b82f6);">
+          Save Note
+        </button>
+      </div>
+    </div>
     <div class="flex justify-center pb-1">
       <button id="smartflo-hangup-btn" class="size-10 rounded-full bg-surface-red-5 hover:bg-surface-red-6 flex items-center justify-center text-ink-white" style="border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;">
         <span class="cw-hangup-icon" style="display:flex">${phoneIconSvg}</span>
@@ -291,6 +311,73 @@ function showCallWidget(destinationNumber, clickToCallResponse, activeCallData) 
 
 	document.addEventListener("mouseup", () => {
 		isDragging = false;
+	});
+
+	// ── Note toggle & save ───────────────────────────────────────
+	let noteOpen = false;
+	let noteSaved = false;
+	let noteToggle = document.getElementById("smartflo-note-toggle");
+	let noteBody = document.getElementById("smartflo-note-body");
+	let noteChevron = document.getElementById("smartflo-note-chevron");
+
+	noteToggle.addEventListener("click", () => {
+		noteOpen = !noteOpen;
+		noteBody.style.display = noteOpen ? "flex" : "none";
+		noteChevron.style.transform = noteOpen ? "rotate(90deg)" : "rotate(0deg)";
+		if (noteOpen) {
+			let input = document.getElementById("smartflo-note-input");
+			if (input) input.focus();
+		}
+	});
+
+	document.getElementById("smartflo-note-save").addEventListener("click", () => {
+		let input = document.getElementById("smartflo-note-input");
+		let content = (input ? input.value : "").trim();
+		if (!content) {
+			toast.error("Please enter a note");
+			return;
+		}
+		if (!referenceDoctype || !referenceDocname) {
+			toast.error("Cannot save note — no linked document");
+			return;
+		}
+		let saveBtn = document.getElementById("smartflo-note-save");
+		saveBtn.disabled = true;
+		saveBtn.textContent = "Saving...";
+
+		let now = new Date();
+		let title = "Call note — " + destinationNumber + " (" + now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + ")";
+
+		call("frappe.client.insert", {
+			doc: {
+				doctype: "FCRM Note",
+				title: title,
+				content: content,
+				reference_doctype: referenceDoctype,
+				reference_docname: referenceDocname,
+			},
+		})
+			.then(() => {
+				noteSaved = true;
+				saveBtn.textContent = "Saved";
+				saveBtn.style.background = "var(--surface-green-4,#22c55e)";
+				if (input) input.style.borderColor = "var(--surface-green-4,#22c55e)";
+				// Allow saving another note after 2s
+				setTimeout(() => {
+					saveBtn.disabled = false;
+					saveBtn.textContent = "Save Note";
+					saveBtn.style.background = "var(--surface-blue-4,#3b82f6)";
+					if (input) {
+						input.value = "";
+						input.style.borderColor = "var(--gray-600)";
+					}
+				}, 2000);
+			})
+			.catch(() => {
+				saveBtn.disabled = false;
+				saveBtn.textContent = "Save Note";
+				toast.error("Failed to save note");
+			});
 	});
 
 	// ── Local tick timer ──────────────────────────────────────────
