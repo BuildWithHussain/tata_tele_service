@@ -66,11 +66,17 @@ def get_live_calls() -> dict:
 	url = f"{settings.api_base_url}/v1/live_calls"
 	response = tata_tele_request("GET", url)
 
-	# Filter to only this agent's calls (source field = agent number)
+	# Filter to only this agent's calls (source for outbound, destination for inbound)
 	all_calls = response if isinstance(response, list) else (response.get("data") or [])
 	agent_digits = _normalize_number(user_mobile)
 
-	my_calls = [c for c in all_calls if _normalize_number(c.get("source", "")) == agent_digits]
+	my_calls = [
+		c for c in all_calls
+		if agent_digits in (
+			_normalize_number(c.get("source", "")),
+			_normalize_number(c.get("destination", "")),
+		)
+	]
 
 	return {"status": "success", "data": my_calls, "agent_number": user_mobile}
 

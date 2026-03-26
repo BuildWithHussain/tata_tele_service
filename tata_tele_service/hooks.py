@@ -8,7 +8,7 @@ app_license = "mit"
 fixtures = [
 	{
 		"dt": "CRM Form Script",
-		"filters": [["name", "in", ["Click to call button in Lead"]]],
+		"filters": [["name", "in", ["Click to call button in Lead", "Incoming call in Lead List"]]],
 	},
 ]
 
@@ -33,7 +33,7 @@ fixtures = [
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/tata_tele_service/css/tata_tele_service.css"
-# app_include_js = "/assets/tata_tele_service/js/tata_tele_service.js"
+app_include_js = "/assets/tata_tele_service/js/incoming_call.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/tata_tele_service/css/tata_tele_service.css"
